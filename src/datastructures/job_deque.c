@@ -17,6 +17,7 @@ struct segment {
 static struct segment *create_segment() {
     struct segment *s = malloc(sizeof(*s));
     s->next = s->prev = NULL;
+    s->bottom = s->top = 0;
     return s;
 }
 
@@ -37,10 +38,7 @@ static int pop_from_top_seg(struct job_deque *deque, struct task *write_to) {
         return 0;
     }
 
-    if (deque->seg_cache) {
-        free_segment(deque->seg_cache);
-        deque->seg_cache = deque->top;
-    }
+    drop_top(deque);
     deque->top = deque->top->prev;
     deque->top->next = NULL; // needed?
     deque->top->top = SEGMENT_NUM - 1;
@@ -51,5 +49,21 @@ static int pop_from_top_seg(struct job_deque *deque, struct task *write_to) {
 int pop_top(struct job_deque *deque, struct task *write_to) {
     if unlikely(!pop_seg(deque->top, write_to)) {
         return pop_from_top_seg(deque, write_to);
+    }
+}
+
+
+
+void push_top(struct job_deque *deque, struct task new) {
+    if likely(deque->top->top != SEGMENT_NUM) {
+        deque->top->task_block[deque->top->top++] = new;
+    }
+    else {
+        struct segment *new_top = create_segment();
+        deque->top->next = new_top;
+        new_top->prev = deque->top;
+        new_top->task_block[0] = new;
+        new_top->top = 1;
+        deque->top = new_top;
     }
 }

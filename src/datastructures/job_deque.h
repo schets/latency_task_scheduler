@@ -8,10 +8,12 @@ struct segment;
 
 
 // Single threaded local job deque used by each worker
+// Maybe consider a design that can be called from
+// signal handlers, to allow preemption of this to spread
+// out jobs
 struct job_deque {
     struct segment *top;
     struct segment *bottom;
-    struct segment *seg_cache;
 };
 
 // Inline these at some point...
