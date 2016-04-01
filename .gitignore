@@ -1,3 +1,10 @@
+# Emacs
+*~
+
+# Dissassembly
+*.s
+*.diss
+
 # Object files
 *.o
 *.ko
