@@ -25,11 +25,14 @@ static void free_segment(struct segment *seg) {
     free(seg);
 }
 
+
+
 static int pop_seg(struct segment *topseg, struct task *towrite) {
     if unlikely(topseg->top == topseg->bottom) {
         return 0;
     }
     *towrite = topseg->task_block[--topseg->top];
+    return 1;
 }
 
 static int pop_from_top_seg(struct job_deque *deque, struct task *write_to) {
@@ -38,8 +41,9 @@ static int pop_from_top_seg(struct job_deque *deque, struct task *write_to) {
         return 0;
     }
 
-    drop_top(deque);
+    struct segment *old_top = deque->top;
     deque->top = deque->top->prev;
+    free_segment(old_top);
     deque->top->next = NULL; // needed?
     deque->top->top = SEGMENT_NUM - 1;
     *write_to = deque->top->task_block[SEGMENT_NUM - 1];
@@ -50,6 +54,7 @@ int pop_top(struct job_deque *deque, struct task *write_to) {
     if unlikely(!pop_seg(deque->top, write_to)) {
         return pop_from_top_seg(deque, write_to);
     }
+    return 1;
 }
 
 
